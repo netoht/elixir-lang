@@ -565,7 +565,314 @@ for reference**:
 
 # Pattern matching
 
-# STOP: http://elixir-lang.org/getting-started/pattern-matching.html
+#### The match operator
+
+We have used the `=` a couple times to assign variables. In Elixir, the `=` 
+operator is actually called *the match operator*.
+
+A variable can only be assigned on the left side of `=`.
+
+```elixir
+# assign variables
+iex> x = 1
+1
+iex> x
+1
+
+# match operator
+iex> 1 = x
+1
+iex> 2 = x
+** (MatchError) no match of right hand side value: 1
+```
+
+Notice that `1 = x` is a valid expression, and it matched because both the left
+and right side are equal to 1. When the sides do not match, a `MatchError` is raised.
+
+#### Pattern matching
+
+The *match operator* is not only used to match against simple values, but it is
+also useful for **destructuring** more complex data types.
+
+A pattern match will error in the case the sides can't match. This is, for example,
+the case when the tuples have different sizes. And also when comparing different
+types.
+
+```elixir
+# We can patten match on tuples
+iex> {a, b, c} = {:hello, "world", 42}
+{:hello, "world", 42}
+iex> a
+:hello
+iex> b
+"world"
+
+# Error when the tuples have different sizes
+iex> {a, b, c} = {:hello, "world"}
+** (MatchError) no match of right hand side value: {:hello, "world"}
+
+# Error when comparing different types
+iex> {a, b, c} = [:hello, "world", "!"]
+** (MatchError) no match of right hand side value: [:hello, "world", "!"]
+```
+
+We can match on specific values. The example below asserts that the left side
+will only match the right side when the right side is a tuple that starts with
+the atom `:ok`:
+
+```elixir
+iex> {:ok, result} = {:ok, 13}
+{:ok, 13}
+iex> result
+13
+
+iex> {:ok, result} = {:error, :oops}
+** (MatchError) no match of right hand side value: {:error, :oops}
+```
+We can pattern match on list. A list also supports matching on its own `head`
+and `tail`.
+
+```elixir
+# Pattern match on list
+iex> [a, b, c] = [1, 2, 3]
+[1, 2, 3]
+iex> a
+1
+
+# Matching on head and tail
+iex> [head | tail] = [1, 2, 3]
+[1, 2, 3]
+iex> head
+1
+iex> tail
+[2, 3]
+```
+
+Similar to the `hd/1` and `tl/1` functions, we can't match an empty list with
+a head and tail pattern:
+
+```elixir
+iex> [h | t] = []
+** (MatchError) no match of right hand side value: []
+```
+
+#### The pin operator
+
+Variables in Elixir can be rebound.
+
+The pin operator `^` should be used when you want to pattern match against an
+existing variable's value rather than rebinding the variable:
+
+```elixir
+iex> x = 1
+1
+iex> ^x = 2
+** (MatchError) no match of right hand side value: 2
+iex> {y, ^x} = {2, 1}
+{2, 1}
+iex> y
+2
+iex> {y, ^x} = {2, 2}
+** (MatchError) no match of right hand side value: {2, 2}
+```
+
+If a variable is mentioned more than once in a pattern, all references should
+bind to the same pattern:
+
+```elixir
+iex> {x, x} = {1, 1}
+1
+iex> {x, x} = {1, 2}
+** (MatchError) no match of right hand side value: {1, 2}
+```
+
+In some cases, you don't care about particular value in a pattern. It is a common
+practice to bind those values to the underscore `_`. For example, if only the
+head of the list matters to us, we can assign the tail to underscore:
+
+The variable `_` is special in that it can never be read from.
+
+```elixir
+# Only the head of the list matters to us
+iex> [h | _] = [1, 2, 3]
+[1, 2, 3]
+iex> h
+1
+
+# Error trying to read variable underscore
+iex> _
+** (CompileError) iex:1: unbound variable _
+```
+# Control-flow structures: case, cond and if
+
+#### case
+
+`case` allow us to compare a value against many pattern until we find a matching
+one:
+
+```elixir
+iex> case {1, 2, 3} do
+...>   {4, 5, 6} ->
+...>     "This clause won't match"
+...>   {1, x, 3} ->
+...>     "This clause will match and bind x to 2 in this clause"
+...>   _ ->
+...>     "This clause would match any value"
+...> end
+"This clause will match and bind x to 2 in this clause"
+```
+
+If you want to pattern match against an existing variable, you need to use the
+`^` operator:
+
+```elixir
+iex> x = 1
+1
+iex> case 10 do
+...>   ^x -> "Won't match"
+...>   _  -> "Will match"
+...> end
+"Will match"
+```
+
+Clauses also allow extra conditions to be specified via guards:
+
+```elixir
+iex> case {1, 2, 3} do
+...>   {1, x, 3} when x > 0 ->
+...>      "Will match"
+...>   _ ->
+...>      "Would match, if guard condition were not satisfied"
+...> end
+"Will match"
+```
+
+#### Expressions in guard clauses
+
+Elixir imports and allows the following expressions in guards by default:
+
+- comparison operators (`==`, `!=`, `===`, `!==`, `>`, `>=`, `<`, `<=`)
+- boolean operators (`and`, `or`, `not`)
+- arithmetic operations (`+`, `-`, `*`, `/`)
+- arithmetic unary operators (`+`, `-`)
+- the binary concatenation operator `<>`
+- the `in` operator as long as the right side is a range or a list
+- all the following type check functions:
+    - `is_atom/1`
+    - `is_binary/1`
+    - `is_bitstring/1`
+    - `is_boolean/1`
+    - `is_float/1`
+    - `is_function/1`
+    - `is_function/2`
+    - `is_integer/1`
+    - `is_list/1`
+    - `is_map/1`
+    - `is_nil/1`
+    - `is_number/1`
+    - `is_pid/1`
+    - `is_port/1`
+    - `is_reference/1`
+    - `is_tuple/1`
+- plus these functions:
+    - `abs(number)`
+    - `binary_part(binary, start, length)`
+    - `bit_size(bitstring)`
+    - `byte_size(bitstring)`
+    - `div(integer, integer)`
+    - `elem(tuple, n)`
+    - `hd(list)`
+    - `length(list)`
+    - `map_size(map)`
+    - `node()`
+    - `node(pid | ref | port)`
+    - `rem(integer, integer)`
+    - `round(number)`
+    - `self()`
+    - `tl(list)`
+    - `trunc(number)`
+    - `tuple_size(tuple)`
+
+Additionally, users may define their own guards. For example, the `Bitwise` 
+module defines guards as functions and operators: `bnot`, `~~~`, `band`, `&&&`,
+`bor`, `|||`, `bxor`, `^^^`, `bsl`, `<<<`, `bsr`, `>>>`.
+
+Note that while boolean operators such as `and`, `or`, `not` are allowed in guards,
+the more general and short-circuiting operators `&&`, `||` and `!` **are not**. 
+
+If none of the clauses match, an error is raised:
+
+```elixir
+iex> case :ok do
+...>   :error -> "Won't match"
+...> end
+** (CaseClauseError) no case clause matching: :ok
+```
+
+Note anonymous functions can also have multiple clauses and guards:
+
+```elixir
+iex> f = fn
+...>   x, y when x > 0 -> x + y
+...>   x, y -> x * y
+...> end
+#Function<12.71889879/2 in :erl_eval.expr/5>
+iex> f.(1, 3)
+4
+iex> f.(-1, 3)
+-3
+```
+
+The number arguments in each anonymous function clause needs to be the same,
+otherwise an error is raised.
+
+#### cond
+
+`case` is useful when you need to match against different values. However, in many
+circumstances, we want to check different conditions and find the first one that
+evaluates to true. In such cases, one may use `cond`:
+
+```elixir
+iex> cond do
+...>   2 + 2 == 5 ->
+...>     "This will not be true"
+...>   2 * 2 == 3 ->
+...>     "Nor this"
+...>   1 + 1 == 2 ->
+...>     "But this will"
+...> end
+"But this will"
+```
+
+This is equivalent to `else if` clauses in many imperative languages (although
+used way less frequently here).
+
+If none the conditions return true, an error is raised. For this reason, it may
+be necessary to add a final condition, equal to true, which will always match:
+
+```elixir
+iex> cond do
+...>   2 + 2 == 5 ->
+...>     "This is never true"
+...>   2 * 2 == 3 ->
+...>     "Nor this"
+...>   true ->
+...>     "This is always true (equivalent to else)"
+...> end
+"This is always true (equivalent to else)"
+```
+
+Note `cond` considers any value besides `nil` and `false` to be true:
+
+```elixir
+iex> cond do
+...>   hd([1, 2, 3]) ->
+...>     "1 is considered as true"
+...> end
+"1 is considered as true"
+```
+
+# STOP: http://elixir-lang.org/getting-started/case-cond-and-if.html#if-and-unless
 
 # References
 
