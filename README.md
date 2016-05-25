@@ -703,6 +703,7 @@ iex> h
 iex> _
 ** (CompileError) iex:1: unbound variable _
 ```
+
 # Control-flow structures: case, cond and if
 
 #### case
@@ -872,14 +873,93 @@ iex> cond do
 "1 is considered as true"
 ```
 
-# STOP: http://elixir-lang.org/getting-started/case-cond-and-if.html#if-and-unless
+#### `if` and `unless`
+
+Besides `case` and `cond`, Elixir also provides the macros `if/2` and `unless/2`
+which are useful when you need to check for just one condition:
+
+```elixir
+iex> if true do
+...>   "This works!"
+...> end
+"This works!"
+iex> unless true do
+...>   "This will never be seen"
+...> end
+nil
+```
+
+If the condition given to `if/2` returns `false` or `nil`, the body given
+between `do/end` is not executed and it simply return `nil`. The opposite happens
+with `unless/2`. They also support `else` blocks:
+
+```elixir
+iex> if nil do
+...>   "This won't be seen"
+...> else
+...>   "This will"
+...> end
+"This will"
+```
+
+#### `do/end` blocks
+
+The four control structures: `case`, `cond`, `if` and `unless` were all wrapped
+in `do/end` blocks.
+
+```elixir
+# if
+iex> if true, do: 1 + 2
+3
+
+iex> if false, do: :this, else: that
+:that
+
+iex> if true, do: (
+...>   a = 1 + 2
+...>   a + 10
+...> )
+13
+```
+
+# Binaries, strings and char lists
+
+#### UTF-8 and Unicode
+
+A string is a UTF-8 encoded binary.
+
+UTF-8 requires one byte to repesent the code points `h`, `e` and `o`, but two
+bytes to represent `ł`. In Elixir, you can get a code point's value by using `?`:
+
+```elixir
+iex> ?a
+97
+iex> ?ł
+322
+
+iex> String.codepoints("hełło")
+["h", "e", "ł", "ł", "o"]
+```
+
+#### Binaries (and bitstrings)
+
+In Elixir, you can define a binary using `<<>>`:
+
+```elixir
+iex> <<0, 1, 2, 3>>
+<<0, 1, 2, 3>>
+iex> byte_size(<<0, 1, 2, 3>>)
+4
+```
+
+# STOP: http://elixir-lang.org/getting-started/binaries-strings-and-char-lists.html#binaries-and-bitstrings
 
 # References
 
 - [Install](http://elixir-lang.org/install.html)
 - [Introduction](http://elixir-lang.org/getting-started/introduction.html)
+- [Kernel: default macros and functions](http://elixir-lang.org/docs/stable/elixir/Kernel.html)
 - [Mix & OPT guide](http://elixir-lang.org/getting-started/mix-otp/introduction-to-mix.html)
-- []()
 
 # Asking questions
 
